@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Çiftlik İmparatorluğu Tycoon - v2.2.0 Global Sıralama</title>
+    <title>Çiftlik İmparatorluğu Tycoon - v2.2.3 Master Sürüm</title>
     <!-- Supabase CDN Bağlantısı -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -79,7 +79,7 @@
             background: var(--bg-primary);
             border: 1px solid var(--border-color);
             border-radius: 6px;
-            color: #white;
+            color: white;
             font-size: 1rem;
             margin-bottom: 20px;
             text-align: center;
@@ -218,7 +218,7 @@
             z-index: 999;
         }
 
-        .tab-content { display: none; padding-bottom: 40px; }
+        .tab-content { display: none; padding-bottom: 60px; }
         .tab-content.active { display: block; }
 
         .section-header {
@@ -243,6 +243,12 @@
             flex-direction: column;
             justify-content: space-between;
             min-height: 160px;
+        }
+
+        .farm-card.locked {
+            justify-content: center;
+            align-items: center;
+            border-style: dashed;
         }
 
         /* 📜 LİDERLİK TABLOSU STİLLERİ */
@@ -276,6 +282,7 @@
         .btn-danger { background: var(--danger); color: white; }
         .btn-warning { background: var(--gold); color: #000; }
         .btn-info { background: var(--gem); color: white; }
+        .btn-token-style { background: var(--token); color: white; }
         
         select { padding: 6px; background: var(--bg-tertiary); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 4px; }
 
@@ -314,7 +321,7 @@
     <div id="app">
         <!-- 💻 DESKTOP SIDEBAR -->
         <aside class="sidebar">
-            <div class="logo"><h2>ÇİFTLİK İMPARATORLUĞU</h2><span>TYCOON v2.2.0</span></div>
+            <div class="logo"><h2>ÇİFTLİK İMPARATORLUĞU</h2><span>TYCOON v2.2.3</span></div>
             <div class="stats-panel">
                 <div class="stat-item"><span>Altın:</span><span id="stat-gold" class="value text-gold">0</span></div>
                 <div class="stat-item"><span>Elmas:</span><span id="stat-gems" class="value text-gem">0</span></div>
@@ -339,11 +346,11 @@
                 <div class="farm-grid" id="farm-fields-container"></div>
             </section>
 
-            <!-- 📊 RANKING TAB (YENİ) -->
+            <!-- 📊 RANKING TAB -->
             <section id="tab-ranking" class="tab-content">
                 <div class="section-header">
                     <h2>📊 Küresel Tarım Holdingleri Sıralaması</h2>
-                    <p>Tüm zamanların en yüksek toplam kazancına (`Tüm Zamanlar Kazanılan Altın`) göre sıralanır.</p>
+                    <p>Tüm zamanların en yüksek toplam kazancına göre sıralanır.</p>
                 </div>
                 <button class="btn btn-info" onclick="Game.fetchLeaderboard()" style="margin-bottom:15px;">🔄 Listeyi Yenile</button>
                 <table class="leaderboard-table">
@@ -360,9 +367,12 @@
                 </table>
             </section>
 
-            <!-- QUESTS TAB -->
+            <!-- 📜 QUESTS TAB -->
             <section id="tab-quests" class="tab-content">
-                <div class="section-header"><h2>📜 Kontrat Görevleri</h2></div>
+                <div class="section-header">
+                    <h2>📜 Sürekli Yenilenen Sipariş Kontratları</h2>
+                    <p>Kontrat hedeflerine ulaştığınızda ödülleri tahsil edebilirsiniz. İstemediğiniz kontratı çöpe atabilirsiniz.</p>
+                </div>
                 <div class="quest-list" id="quests-container"></div>
             </section>
 
@@ -397,9 +407,31 @@
 
             <!-- SETTINGS TAB -->
             <section id="tab-settings" class="tab-content">
-                <div class="section-header"><h2>⚙️ Karaborsa & Ayarlar</h2></div>
+                <div class="section-header"><h2>⚙️ Karaborsa & Sistem Ayarları</h2></div>
+                
+                <h3 style="margin-bottom: 12px; color: var(--gem);">💎 Premium Elmas Harcama Pazarı (Karaborsa)</h3>
+                <div class="black-market-grid" style="margin-bottom: 25px;">
+                    <div class="farm-card" style="border-color: var(--gem); min-height:130px;">
+                        <h3>📊 Whale Pump</h3>
+                        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom: 8px;">Ekili ürünleri borsada anında tavan fiyata (`x3.5`) kilitler.</p>
+                        <button class="btn btn-info" onclick="Game.buyWhalePump()">Harca: 15 Elmas</button>
+                    </div>
+                    <div class="farm-card" style="border-color: var(--gem); min-height:130px;">
+                        <h3>💰 Teşvik Fonu</h3>
+                        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom: 8px;">Kasaya anında hacminize bağlı olarak hibe altın ekler.</p>
+                        <button class="btn btn-info" onclick="Game.buyGoldBoost()">Harca: 10 Elmas</button>
+                    </div>
+                    <div class="farm-card" style="border-color: var(--gem); min-height:130px;">
+                        <h3>🎰 Spekülasyon</h3>
+                        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom: 8px;">Tüm borsa fiyatlarını anında zirve çarpanına eşitler.</p>
+                        <button class="btn btn-info" onclick="Game.buyMarketManipulate()">Harca: 5 Elmas</button>
+                    </div>
+                </div>
+
+                <hr style="border:1px solid var(--border-color); margin-bottom:15px;">
+                <h3 style="margin-bottom: 10px;">Sistem Kontrolleri</h3>
                 <button id="btn-save-game" class="btn btn-success" style="margin-right:5px;">Manuel Kaydet</button>
-                <button id="btn-hard-reset" class="btn btn-danger">Sıfırla</button>
+                <button id="btn-hard-reset" class="btn btn-danger">Tüm Verileri Sıfırla</button>
             </section>
         </main>
     </div>
@@ -408,16 +440,16 @@
     <nav class="mobile-nav" id="mobile-nav-bar">
         <button class="mobile-nav-btn active" data-tab="farm"><span>🌾</span>Tarla</button>
         <button class="mobile-nav-btn" data-tab="ranking"><span>📊</span>Skor</button>
+        <button class="mobile-nav-btn" data-tab="quests"><span>📜</span>Görev</button>
         <button class="mobile-nav-btn" data-tab="market"><span>⚖️</span>Borsa</button>
         <button class="mobile-nav-btn" data-tab="factory"><span>🏭</span>Sanayi</button>
-        <button class="mobile-nav-btn" data-tab="research"><span>🔬</span>Ar-Ge</button>
         <button class="mobile-nav-btn" data-tab="settings"><span>⚙️</span>Ayar</button>
     </nav>
 
     <div id="toast-container"></div>
 
     <script>
-        // ⚠️ SUPABASE BAĞLANTI AYARLARI (Kendi bilgilerinizle doldurun)
+        // ⚠️ SUPABASE BAĞLANTI AYARLARI (Kendi bilgilerinizi buraya girin)
         const SUPABASE_URL = "https://vnwedmavyikpfpnzqyfl.supabase.co";
         const SUPABASE_KEY = "sb_publishable_zMmTJUNDDPmSen3c4bTfGQ_psotehPa";
         
@@ -465,14 +497,21 @@
             { id: "token_crit_chance", name: "Kritik Şans Çipi", baseCost: 1, desc: "Hasat yaparken %5 şansla x3 katı altın kazandırır." }
         ];
 
+        // 📜 GELİŞMİŞ VE ÇEŞİTLENDİRİLMİŞ KONTRAT HAVUZU GERİ YÜKLENDİ
         const QUEST_TEMPLATES = [
-            { type: "harvest_any", text: "Toplamda 40 ekin topla", target: 40, rewardGold: 1200, rewardGem: 4 },
-            { type: "earn_gold", text: "Borsadan 5000 Altın kazan", target: 5000, rewardGold: 800, rewardGem: 3 }
+            { type: "harvest_wheat", text: "Yerel pazar için 20 adet Buğday hasat et", target: 20, rewardGold: 400, rewardGem: 2 },
+            { type: "harvest_barley", text: "Malt tesisleri için 15 adet Arpa hasat et", target: 15, rewardGold: 600, rewardGem: 3 },
+            { type: "harvest_corn", text: "Rafineriler için 12 adet Mısır hasat et", target: 12, rewardGold: 800, rewardGem: 4 },
+            { type: "harvest_potato", text: "Restoranlar için 10 adet Patates hasat et", target: 10, rewardGold: 1000, rewardGem: 5 },
+            { type: "harvest_carrot", text: "İhracat için 8 adet Havuç hasat et", target: 8, rewardGold: 1500, rewardGem: 6 },
+            { type: "earn_gold", text: "Borsadan hırslı işlemlerle 5000 Altın kazan", target: 5000, rewardGold: 800, rewardGem: 3 },
+            { type: "harvest_any", text: "Hacim artışı için toplamda 40 ekin topla", target: 40, rewardGold: 1200, rewardGem: 4 },
+            { type: "spend_gems", text: "Karaborsada herhangi bir modülde 5 Elmas harca", target: 5, rewardGold: 2000, rewardGem: 1 }
         ];
 
         const Game = {
             isRunning: false,
-            saveKey: "CiftlikTycoon_GlobalSave_v22",
+            saveKey: "CiftlikTycoon_GlobalSave_v223",
             state: {
                 username: "",
                 gold: 150, gems: 0, tokens: 0,
@@ -501,9 +540,10 @@
 
                 CROPS_DATA.forEach(c => { if(!this.state.marketFluctuations[c.id]) this.state.marketFluctuations[c.id] = 1.0; });
 
+                // Başlangıçta 3 adet aktif kontrat çekilir
                 if (!this.state.activeQuests || this.state.activeQuests.length === 0) {
                     this.state.activeQuests = [];
-                    for(let i=0; i<2; i++) { this.state.activeQuests.push(this.generateRandomQuest()); }
+                    for(let i=0; i<3; i++) { this.state.activeQuests.push(this.generateRandomQuest()); }
                 }
 
                 this.setupTabs();
@@ -538,7 +578,6 @@
                 this.syncWithSupabase();
             },
 
-            // ☁️ GLOBAL BULUT SENKRONİZASYON MOTORU
             async syncWithSupabase() {
                 if(!supabaseClient || !this.state.username) return;
                 try {
@@ -551,7 +590,6 @@
                 } catch(e) { console.error("Bulut senkronizasyon hatası:", e); }
             },
 
-            // 📊 SKORLARI VERİTABANINDAN ÇEKME MOTORU
             async fetchLeaderboard() {
                 const tbody = document.getElementById("leaderboard-tbody");
                 if(!tbody) return;
@@ -571,11 +609,6 @@
                     if (error) throw error;
 
                     tbody.innerHTML = "";
-                    if(data.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Henüz kayıtlı holding bulunmuyor.</td></tr>`;
-                        return;
-                    }
-
                     data.forEach((row, index) => {
                         const isMe = row.username === this.state.username ? "background: rgba(245, 158, 11, 0.1);" : "";
                         tbody.innerHTML += `
@@ -623,7 +656,11 @@
             },
 
             generateRandomQuest() {
-                const template = QUEST_TEMPLATES[Math.floor(Math.random() * QUEST_TEMPLATES.length)];
+                const currentActiveTypes = this.state.activeQuests ? this.state.activeQuests.map(q => q.type) : [];
+                let availableTemplates = QUEST_TEMPLATES.filter(t => !currentActiveTypes.includes(t.type));
+                if (availableTemplates.length === 0) availableTemplates = QUEST_TEMPLATES;
+
+                const template = availableTemplates[Math.floor(Math.random() * availableTemplates.length)];
                 return {
                     id: "q_" + Math.random().toString(36).substring(2, 7),
                     type: template.type,
@@ -672,8 +709,59 @@
                 this.save();
             },
 
+            // 💎 KARABORSA ELMAS PAZARI VE SEYREK KONTRAT ENTEGRASYONU
+            buyWhalePump() {
+                if (this.state.gems >= 15) {
+                    this.state.gems -= 15;
+                    this.state.unlockedFields.forEach(id => {
+                        if (this.state.fields[id]) {
+                            const cId = this.state.fields[id].cropId;
+                            this.state.marketFluctuations[cId] = 3.5;
+                        }
+                    });
+                    // Karaborsa elmas harcamasını ilgili kontrat görevine işle
+                    this.state.activeQuests.forEach(q => { if (q.type === "spend_gems") q.current = Math.min(q.target, q.current + 15); });
+                    this.createToast("📊 BALİNA DESTEĞİ: Tüm ekili ürünlerin fiyatı tavan yaptı!");
+                    this.save();
+                    this.initialRenderAllTabs();
+                } else { this.createToast("Yetersiz Elmas!"); }
+            },
+
+            buyGoldBoost() {
+                if (this.state.gems >= 10) {
+                    this.state.gems -= 10;
+                    const bonusGold = Math.max(1000, Math.floor(this.state.totals.goldEarned * 0.2));
+                    this.state.gold += bonusGold;
+                    this.state.totals.goldEarned += bonusGold;
+                    // Karaborsa elmas harcamasını ilgili kontrat görevine işle
+                    this.state.activeQuests.forEach(q => { if (q.type === "spend_gems") q.current = Math.min(q.target, q.current + 10); });
+                    this.createToast(`💰 Fon aktarıldı: +${this.formatNumber(bonusGold)} Altın.`);
+                    this.save();
+                    this.initialRenderAllTabs();
+                } else { this.createToast("Yetersiz Elmas!"); }
+            },
+
+            buyMarketManipulate() {
+                if (this.state.gems >= 5) {
+                    this.state.gems -= 5;
+                    CROPS_DATA.forEach(c => { this.state.marketFluctuations[c.id] = 3.5; });
+                    // Karaborsa elmas harcamasını ilgili kontrat görevine işle
+                    this.state.activeQuests.forEach(q => { if (q.type === "spend_gems") q.current = Math.min(q.target, q.current + 5); });
+                    this.createToast("🎰 Borsa manipüle edildi! Tüm borsa tavan.");
+                    this.save();
+                    this.initialRenderAllTabs();
+                } else { this.createToast("Yetersiz Elmas!"); }
+            },
+
             toggleFactory(id) {
                 this.state.factoryStatus[id] = this.state.factoryStatus[id] === false ? true : false;
+                this.save();
+                this.initialRenderAllTabs();
+            },
+
+            cancelAndReplaceQuest(index) {
+                this.state.activeQuests[index] = this.generateRandomQuest();
+                this.createToast("Kontrat iptal edildi, yeni teklif alındı.");
                 this.save();
                 this.initialRenderAllTabs();
             },
@@ -759,6 +847,7 @@
                             </div>`;
                     });
                 }
+                this.updateFastStatsOnly();
             },
 
             buyPrestigeUpgrade(id, cost) {
@@ -785,14 +874,26 @@
                 const currentGain = Math.floor(Math.sqrt(this.state.totals.goldEarned / 2000));
                 document.getElementById("prestige-gain-amount").innerText = currentGain;
 
+                // 📜 KONTRAT SİSTEMİ DOM OLUŞTURUCU (İPTAL ETME ÇÖP KUTUSU AKTİF)
                 const qContainer = document.getElementById("quests-container");
                 if (qContainer) {
                     qContainer.innerHTML = "";
                     this.state.activeQuests.forEach((q, idx) => {
-                        qContainer.innerHTML += `<div class="farm-card" style="border-left: 4px solid var(--gem); min-height: 140px;">
-                                <p style="font-size:0.8rem; margin:4px 0;">${q.text}</p>
-                                <small style="display:block; margin-bottom:8px; color:var(--gold); font-weight: bold;">${q.current} / ${q.target}</small>
-                                <button class="btn btn-info" ${q.current >= q.target ? '' : 'disabled'} onclick="Game.claimQuest('${q.id}')">${q.current >= q.target ? '🎁 Ödülü Al' : '🛠️ Sürüyor'}</button>
+                        qContainer.innerHTML += `
+                            <div class="farm-card" style="border-left: 4px solid var(--gem); min-height: 160px; justify-content: space-between;">
+                                <div>
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                                        <b style="color:var(--gem); font-size:0.85rem;">📋 Sipariş Kontratı</b>
+                                        <span style="cursor:pointer; color: var(--danger); font-size: 1.1rem;" onclick="Game.cancelAndReplaceQuest(${idx})" title="Bu kontratı yırtıp yenisini al">🗑️</span>
+                                    </div>
+                                    <p style="font-size:0.85rem; color:var(--text-main); margin-top:4px;">${q.text}</p>
+                                </div>
+                                <div>
+                                    <small style="display:block; margin-bottom:8px; color:var(--gold); font-weight: bold;">İlerleme: ${q.current} / ${q.target}</small>
+                                    <button class="btn btn-info" style="width:100%;" ${q.current >= q.target ? '' : 'disabled'} onclick="Game.claimQuest('${q.id}')">
+                                        ${q.current >= q.target ? '🎁 Ödülü Al' : '🛠️ Sürüyor'}
+                                    </button>
+                                </div>
                             </div>`;
                     });
                 }
@@ -814,10 +915,15 @@
                 const qIdx = this.state.activeQuests.findIndex(q => q.id === questId);
                 if (qIdx === -1) return;
                 const quest = this.state.activeQuests[qIdx];
-                this.state.gold += quest.rewardGold;
-                this.state.gems += quest.rewardGem;
-                this.state.activeQuests[qIdx] = this.generateRandomQuest();
-                this.save();
+                
+                if (quest.current >= quest.target) {
+                    this.state.gold += quest.rewardGold;
+                    this.state.gems += quest.rewardGem;
+                    this.createToast("Kontrat ödülleri tahsil edildi!");
+                    this.state.activeQuests[qIdx] = this.generateRandomQuest();
+                    this.save();
+                    this.initialRenderAllTabs();
+                }
             },
 
             changeCrop(fieldId, cropId) {
@@ -876,10 +982,20 @@
                 this.state.gold += finalGain;
                 this.state.totals.goldEarned += finalGain;
 
+                // 📜 TÜM EKİN DETAYLARINI VE KAZANÇLARI GÜNCELLEYEN KONTRAT MOTORU
                 this.state.activeQuests.forEach(q => {
                     if (q.type === "harvest_any") q.current = Math.min(q.target, q.current + 1);
                     if (q.type === "earn_gold") q.current = Math.min(q.target, q.current + finalGain);
+                    if (q.type === "harvest_wheat" && crop.id === "wheat") q.current = Math.min(q.target, q.current + 1);
+                    if (q.type === "harvest_barley" && crop.id === "barley") q.current = Math.min(q.target, q.current + 1);
+                    if (q.type === "harvest_corn" && crop.id === "corn") q.current = Math.min(q.target, q.current + 1);
+                    if (q.type === "harvest_potato" && crop.id === "potato") q.current = Math.min(q.target, q.current + 1);
+                    if (q.type === "harvest_carrot" && crop.id === "carrot") q.current = Math.min(q.target, q.current + 1);
                 });
+
+                if(this.state.research.includes("genetic_cross") && Math.random() < 0.03) {
+                    this.state.gems += 1;
+                }
 
                 fState.progress = 0;
                 this.save();
