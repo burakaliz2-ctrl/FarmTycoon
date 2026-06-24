@@ -3,27 +3,34 @@ const Game = {
     lastTick: Date.now(),
     tickRate: 1000,
 
-    init() {
-        this.state = SaveSystem.load();
-        
-        if (!this.state.activeQuests || this.state.activeQuests.length === 0) {
-            this.state.activeQuests = [];
-            for(let i = 0; i < 3; i++) {
-                this.state.activeQuests.push(this.generateRandomQuest());
-            }
-            SaveSystem.save(this.state);
+async init() {
+    // 1. Verilerin yüklenmesini bekle
+    this.state = await SaveSystem.load(); 
+    
+    // 2. Eğer Supabase kullanıyorsan yükleme süresini bekle
+    // (Eğer SaveSystem içinde await kullanıyorsan buraya await ekle)
+
+    // 3. Güvenlik Kontrolü: State boşsa veya görevler yoksa
+    if (!this.state.activeQuests || this.state.activeQuests.length === 0) {
+        this.state.activeQuests = [];
+        for(let i = 0; i < 3; i++) {
+            this.state.activeQuests.push(this.generateRandomQuest());
         }
+        await SaveSystem.save(this.state);
+    }
 
-        EconomyEngine.init();
-        UIModule.initTabs();
-        this.setupEventListeners();
-        this.calculateOfflineProgress();
-        this.gameLoop();
+    EconomyEngine.init();
+    UIModule.initTabs();
+    this.setupEventListeners();
+    
+    this.calculateOfflineProgress();
+    this.gameLoop();
 
-        setInterval(() => SaveSystem.save(this.state), 30000);
-        window.addEventListener('beforeunload', () => SaveSystem.save(this.state));
-        this.updateUI();
-    },
+    setInterval(() => SaveSystem.save(this.state), 30000);
+    window.addEventListener('beforeunload', () => SaveSystem.save(this.state));
+
+    this.updateUI();
+},,
 
     generateRandomQuest() {
         const templates = [
