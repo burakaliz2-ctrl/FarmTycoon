@@ -1,24 +1,71 @@
 const Game = {
     state: {},
-    tickRate: 1000, // 1 Saniye
+    lastTick: Date.now(),
+    tickRate: 1000, // 1 Saniye hedefi
 
     init() {
         this.state = SaveSystem.load();
         EconomyEngine.init();
         UIModule.initTabs();
         this.setupEventListeners();
-        
-        // Çevrimdışı İlerleme Hesaplama
+
+        // Çevrimdışı İlerleme
         this.calculateOfflineProgress();
 
-        // Ana Oyun Döngüsü Başlatma
-        setInterval(() => this.gameTick(), this.tickRate);
-        
-        // Otomatik Kayıt Sistemi (30 Saniyede Bir)
+        // Döngüyü başlat
+        this.gameLoop();
+
+        // Otomatik Kayıt (30 Saniye)
         setInterval(() => SaveSystem.save(this.state), 30000);
+
+        // Sekme kapanırken veya yenilenirken kaydet
+        window.addEventListener('beforeunload', () => SaveSystem.save(this.state));
 
         this.updateUI();
     },
+
+    // requestAnimationFrame ile daha akıcı ve performanslı döngü
+    gameLoop() {
+        const now = Date.now();
+        const deltaTime = now - this.lastTick;
+
+        if (deltaTime >= this.tickRate) {
+            this.gameTick();
+            this.lastTick = now;
+        }
+
+        requestAnimationFrame(() => this.gameLoop());
+    },
+
+    gameTick() {
+        // EconomyEngine içinde saniyelik üretimi hesapla
+        EconomyEngine.update(this.state);
+        
+        // UI güncellemesini tüm her şey için değil, sadece değişenler için tetikle
+        this.updateUI();
+    },
+
+    updateUI() {
+        // UIModule içinde DOM manipülasyonlarını optimize et
+        UIModule.render(this.state);
+    },
+
+    setupEventListeners() {
+        // Tıklama eventlerini burada yönetebilirsin
+    },
+
+    calculateOfflineProgress() {
+        const lastSave = localStorage.getItem('lastSaveTimestamp');
+        if (!lastSave) return;
+
+        const secondsPassed = (Date.now() - parseInt(lastSave)) / 1000;
+        
+        // EconomyEngine'e gecen süreyi göndererek birikimi hesapla
+        if (secondsPassed > 0) {
+            EconomyEngine.applyOfflineProgress(this.state, secondsPassed);
+        }
+    }
+},
 
     setupEventListeners() {
         document.getElementById("btn-save-game").addEventListener("click", () => {
@@ -90,27 +137,27 @@ const Game = {
         }
     },
 
-    triggerPrestige() {
-        const prestigeGain = Math.floor(1000 * Math.sqrt(this.state.totals.goldEarned / 1e9));
-        if (prestigeGain < 1) {
-            this.createToast("Henüz prestij yapacak kadar küresel hacme ulaşamadınız!");
-            return;
-        }
-
-        this.state.tokens += prestigeGain;
-        this.state.totals.prestigeCount += 1;
-        
-        // Resetleme operasyonu (Kalıcı veriler korunur)
-        this.state.gold = 10;
-        this.state.fields = { 1: { cropId: "wheat", progress: 0 } };
-        this.state.unlockedFields = [1];
-        this.state.workers = { farmer: 0, harvester: 0, seller: 0 };
-        this.state.machines = { tractor: 0, irrigation: 0, drone: 0 };
-        
-        SaveSystem.save(this.state);
-        this.createToast("İmparatorluk devredildi! Yeni çağ başladı.");
-        this.updateUI();
-    },
+triggerPrestige() {
+    const gain = Math.floor(Math.sqrt(this.state.totals.goldEarned / 2000));
+    if (gain < 1) return;
+    
+    this.state.tokens += gain;
+    this.state.gold = 150;
+    this.state.unlockedFields = [1];
+    this.state.unlockedFactories = [];
+    this.state.research = [];
+    this.state.fields = { 1: { cropId: "wheat", progress: 0 } };
+    
+    // BURAYI GÜNCELLEYİN: Boş bırakmak yerine hemen yeni görevleri üretin
+    this.state.activeQuests = [];
+    for(let i=0; i<3; i++) { 
+        this.state.activeQuests.push(this.generateRandomQuest()); 
+    }
+    
+    this.state.factoryStatus = {};
+    this.save();
+    window.location.reload();
+},
 
     checkAchievements() {
         ACHIEVEMENTS_DATA.forEach(a => {
