@@ -11,7 +11,26 @@
     --danger: #ef4444;
     --border-color: #2e3d52;
 }
+.bottom-nav,
+.mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+}
 
+.tab-content,
+.page-content,
+.main-content,
+#farm-screen,
+#farm-tab {
+    padding-bottom: 140px !important;
+}
+
+body {
+    overflow-y: auto !important;
+}
 * {
     box-sizing: border-box;
     margin: 0;
