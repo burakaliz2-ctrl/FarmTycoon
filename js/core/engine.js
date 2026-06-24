@@ -8,7 +8,11 @@ const Game = {
         EconomyEngine.init();
         UIModule.initTabs();
         this.setupEventListeners();
-
+if (!this.state.activeQuests || this.state.activeQuests.length === 0) {
+        this.state.activeQuests = [];
+        for(let i = 0; i < 3; i++) {
+            this.state.activeQuests.push(this.generateRandomQuest());
+        }
         // Çevrimdışı İlerleme
         this.calculateOfflineProgress();
 
@@ -138,24 +142,31 @@ const Game = {
     },
 
 triggerPrestige() {
+    // 1. Prestij kazancını hesapla
     const gain = Math.floor(Math.sqrt(this.state.totals.goldEarned / 2000));
     if (gain < 1) return;
-    
+
+    // 2. State'i sıfırla
     this.state.tokens += gain;
     this.state.gold = 150;
     this.state.unlockedFields = [1];
     this.state.unlockedFactories = [];
     this.state.research = [];
     this.state.fields = { 1: { cropId: "wheat", progress: 0 } };
-    
-    // BURAYI GÜNCELLEYİN: Boş bırakmak yerine hemen yeni görevleri üretin
+    this.state.factoryStatus = {};
+
+    // 3. KRİTİK DÜZELTME: Görevleri prestij anında yeniden oluştur
+    // EconomyEngine veya Quests modülünüzün görev üretme fonksiyonunu çağırın:
     this.state.activeQuests = [];
-    for(let i=0; i<3; i++) { 
+    for(let i = 0; i < 3; i++) {
+        // Eğer görev üretme fonksiyonunuz EconomyEngine içindeyse: 
+        // this.state.activeQuests.push(EconomyEngine.generateQuest()); 
+        // Veya daha önce paylaştığınız kodlardaki generateRandomQuest kullanıyorsanız:
         this.state.activeQuests.push(this.generateRandomQuest()); 
     }
-    
-    this.state.factoryStatus = {};
-    this.save();
+
+    // 4. Kaydet ve Sayfayı Yenile
+    SaveSystem.save(this.state);
     window.location.reload();
 },
 
