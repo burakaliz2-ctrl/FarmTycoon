@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Çiftlik İmparatorluğu Tycoon - v2.1.0 Mobil Hibrit</title>
+    <title>Çiftlik İmparatorluğu Tycoon - v2.2.0 Global Sıralama</title>
+    <!-- Supabase CDN Bağlantısı -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-primary: #12181f;
@@ -71,12 +73,19 @@
             letter-spacing: 1px;
         }
 
-        .welcome-box p {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 25px;
-            line-height: 1.4;
+        .welcome-box input {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: #white;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            text-align: center;
+            outline: none;
         }
+        .welcome-box input:focus { border-color: var(--gold); }
 
         .btn-start {
             background: var(--gold);
@@ -101,7 +110,6 @@
             flex-direction: row;
         }
 
-        /* DESKTOP SIDEBAR */
         .sidebar {
             width: 280px;
             min-width: 280px;
@@ -157,7 +165,7 @@
             font-weight: bold;
         }
 
-        /* MOBİL MOBİL ALT MENÜ (VARSAYILAN GİZLİ) */
+        /* MOBİL ALT MENÜ */
         .mobile-nav {
             display: none;
             position: fixed;
@@ -186,16 +194,8 @@
             flex-grow: 1;
             height: 100%;
         }
-
-        .mobile-nav-btn.active {
-            color: var(--gold);
-            font-weight: bold;
-        }
-
-        .mobile-nav-btn span {
-            font-size: 1.2rem;
-            margin-bottom: 2px;
-        }
+        .mobile-nav-btn.active { color: var(--gold); font-weight: bold; }
+        .mobile-nav-btn span { font-size: 1.1rem; margin-bottom: 2px; }
 
         /* İÇERİK ALANI */
         .main-content {
@@ -205,7 +205,6 @@
             height: 100vh;
         }
 
-        /* MOBİL ÜST PANEL DESTEĞİ */
         .mobile-top-bar {
             display: none;
             background: var(--bg-secondary);
@@ -219,7 +218,7 @@
             z-index: 999;
         }
 
-        .tab-content { display: none; padding-bottom: 20px; }
+        .tab-content { display: none; padding-bottom: 40px; }
         .tab-content.active { display: block; }
 
         .section-header {
@@ -228,9 +227,7 @@
             padding-bottom: 8px;
         }
         .section-header h2 { font-size: 1.3rem; margin-bottom: 2px; }
-        .section-header p { color: var(--text-muted); font-size: 0.8rem; }
 
-        /* RESPONSIVE GRID ALTYAPISI */
         .farm-grid, .market-grid, .factory-grid, .research-list, .achievements-grid, .prestige-shop-grid, .quest-list, .black-market-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -246,96 +243,52 @@
             flex-direction: column;
             justify-content: space-between;
             min-height: 160px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
 
-        .farm-card.locked {
-            justify-content: center;
-            align-items: center;
-            border-style: dashed;
+        /* 📜 LİDERLİK TABLOSU STİLLERİ */
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 10px;
         }
+        .leaderboard-table th, .leaderboard-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .leaderboard-table th { background: var(--bg-tertiary); color: var(--gold); }
+        .leaderboard-table tr:hover { background: rgba(255,255,255,0.02); }
+        .rank-highlight { font-weight: bold; color: var(--gold); }
 
         .progress-bar-container {
             background: var(--bg-primary);
             border-radius: 10px;
             height: 8px;
-            width: 100%;
             margin: 10px 0;
             overflow: hidden;
         }
-        .progress-bar {
-            background: var(--success);
-            height: 100%;
-            width: 0%;
-        }
-
-        .btn {
-            padding: 8px 12px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.8rem;
-        }
+        .progress-bar { background: var(--success); height: 100%; width: 0%; }
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
         .btn-success { background: var(--success); color: white; }
         .btn-danger { background: var(--danger); color: white; }
         .btn-warning { background: var(--gold); color: #000; }
         .btn-info { background: var(--gem); color: white; }
-        .btn-token-style { background: var(--token); color: white; }
+        
+        select { padding: 6px; background: var(--bg-tertiary); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 4px; }
 
-        select {
-            padding: 6px;
-            background: var(--bg-tertiary);
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 0.8rem;
-        }
+        #toast-container { position: fixed; bottom: 80px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 6px; }
+        .toast { background: var(--bg-secondary); border-left: 4px solid var(--gold); color: var(--text-main); padding: 10px 15px; font-size: 0.8rem; }
 
-        #toast-container {
-            position: fixed;
-            bottom: 80px; /* Mobilde alt barın üstünde kalması için ayarlandı */
-            right: 20px;
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .toast {
-            background: var(--bg-secondary);
-            border-left: 4px solid var(--gold);
-            color: var(--text-main);
-            padding: 10px 15px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-        }
-
-        /* 📱 RESPONSIVE MOBİL SORGULARI (MEDIA QUERIES) */
         @media (max-width: 768px) {
-            #app {
-                flex-direction: column;
-            }
-            .sidebar {
-                display: none; /* Yan menüyü mobilde gizle */
-            }
-            .mobile-nav {
-                display: flex; /* Alt navigasyonu mobilde aç */
-            }
-            .mobile-top-bar {
-                display: flex; /* Üst bakiye panelini mobilde aç */
-            }
-            .main-content {
-                height: calc(100vh - 115px); /* Üst ve alt bar payları düşüldü */
-                padding: 12px;
-            }
-            #toast-container {
-                left: 20px;
-                right: 20px;
-                bottom: 75px;
-            }
-            .welcome-box {
-                padding: 25px 15px;
-            }
+            #app { flex-direction: column; }
+            .sidebar { display: none; }
+            .mobile-nav { display: flex; }
+            .mobile-top-bar { display: flex; }
+            .main-content { height: calc(100vh - 115px); padding: 12px; }
+            #toast-container { left: 20px; right: 20px; bottom: 75px; }
         }
     </style>
 </head>
@@ -345,7 +298,8 @@
     <div id="welcome-overlay">
         <div class="welcome-box">
             <h1>ÇİFTLİK İMPARATORLUĞU</h1>
-            <p>Dinamik borsaya yön verin, fabrikaları yönetin ve tarım imparatorluğunuzu cebinizden kontrol edin!</p>
+            <p style="margin-bottom:15px;">Global borsa simülasyonuna katılarak tarım holdinginizi kurun!</p>
+            <input type="text" id="username-input" placeholder="İmparatorluk Adınızı Girin..." maxlength="15">
             <button class="btn-start" onclick="Game.startApp()">İMPARATORLUĞU YÖNET 🌾</button>
         </div>
     </div>
@@ -360,38 +314,50 @@
     <div id="app">
         <!-- 💻 DESKTOP SIDEBAR -->
         <aside class="sidebar">
-            <div class="logo">
-                <h2>ÇİFTLİK İMPARATORLUĞU</h2>
-                <span>TYCOON v2.1.0</span>
-            </div>
-            
+            <div class="logo"><h2>ÇİFTLİK İMPARATORLUĞU</h2><span>TYCOON v2.2.0</span></div>
             <div class="stats-panel">
-                <div class="stat-item"><span class="label">Altın:</span><span id="stat-gold" class="value text-gold">0</span></div>
-                <div class="stat-item"><span class="label">Elmas:</span><span id="stat-gems" class="value text-gem">0</span></div>
-                <div class="stat-item"><span class="label">İmparatorluk Jetonu:</span><span id="stat-tokens" class="value text-token">0</span></div>
-                <div class="stat-item"><span class="label">Mevsim/Hava:</span><span id="stat-environment" class="value">İlkbahar / Güneşli</span></div>
+                <div class="stat-item"><span>Altın:</span><span id="stat-gold" class="value text-gold">0</span></div>
+                <div class="stat-item"><span>Elmas:</span><span id="stat-gems" class="value text-gem">0</span></div>
+                <div class="stat-item"><span>Jeton:</span><span id="stat-tokens" class="value text-token">0</span></div>
             </div>
-
             <nav class="nav-menu">
                 <button class="nav-btn active" data-tab="farm">🌾 Çiftlik Arazi</button>
-                <button class="nav-btn" data-tab="quests">📜 Kontrat Görevleri</button>
+                <button class="nav-btn" data-tab="ranking">📊 Küresel Sıralama</button>
+                <button class="nav-btn" data-tab="quests">📜 Kontratlar</button>
                 <button class="nav-btn" data-tab="market">⚖️ Dinamik Pazar</button>
-                <button class="nav-btn" data-tab="factory">🏭 Sanayi Fabrikaları</button>
-                <button class="nav-btn" data-tab="research">🔬 Ar-Ge Laboratuvarı</button>
-                <button class="nav-btn" data-tab="achievements">🏆 Başarımlar</button>
-                <button class="nav-btn" data-tab="prestige">👑 Prestij & Mağaza</button>
-                <button class="nav-btn" data-tab="settings">⚙️ Karaborsa & Ayarlar</button>
+                <button class="nav-btn" data-tab="factory">🏭 Fabrikalar</button>
+                <button class="nav-btn" data-tab="research">🔬 Ar-Ge</button>
+                <button class="nav-btn" data-tab="prestige">👑 Prestij</button>
+                <button class="nav-btn" data-tab="settings">⚙️ Ayarlar</button>
             </nav>
         </aside>
 
         <main class="main-content">
             <!-- FARM TAB -->
             <section id="tab-farm" class="tab-content active">
-                <div class="section-header">
-                    <h2>🌾 Çiftlik Arazileri</h2>
-                    <p>Çok sattığınız ürün ucuzlar; fabrikalar saniyede otomatik gider keser.</p>
-                </div>
+                <div class="section-header"><h2>🌾 Çiftlik Arazileri</h2></div>
                 <div class="farm-grid" id="farm-fields-container"></div>
+            </section>
+
+            <!-- 📊 RANKING TAB (YENİ) -->
+            <section id="tab-ranking" class="tab-content">
+                <div class="section-header">
+                    <h2>📊 Küresel Tarım Holdingleri Sıralaması</h2>
+                    <p>Tüm zamanların en yüksek toplam kazancına (`Tüm Zamanlar Kazanılan Altın`) göre sıralanır.</p>
+                </div>
+                <button class="btn btn-info" onclick="Game.fetchLeaderboard()" style="margin-bottom:15px;">🔄 Listeyi Yenile</button>
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;">Sıra</th>
+                            <th>İmparatorluk Adı</th>
+                            <th>Toplam Ciro (Altın)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-tbody">
+                        <tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Veriler yükleniyor...</td></tr>
+                    </tbody>
+                </table>
             </section>
 
             <!-- QUESTS TAB -->
@@ -402,19 +368,13 @@
 
             <!-- MARKET TAB -->
             <section id="tab-market" class="tab-content">
-                <div class="section-header">
-                    <h2>⚖️ Ticaret Borsası</h2>
-                    <p>Anlık borsa tahtası arz-talep hareketlerine göre saniyelik dalgalanır.</p>
-                </div>
+                <div class="section-header"><h2>⚖️ Ticaret Borsası</h2></div>
                 <div class="market-grid" id="market-prices-container"></div>
             </section>
 
             <!-- FACTORY TAB -->
             <section id="tab-factory" class="tab-content">
-                <div class="section-header">
-                    <h2>🏭 Fabrika Kompleksi</h2>
-                    <p style="color: var(--danger);">Giderler saniyede kesilir. Boşta kaldıklarında şalteri kapatın!</p>
-                </div>
+                <div class="section-header"><h2>🏭 Fabrika Kompleksi</h2></div>
                 <div class="factory-grid" id="factory-container"></div>
             </section>
 
@@ -422,12 +382,6 @@
             <section id="tab-research" class="tab-content">
                 <div class="section-header"><h2>🔬 Ar-Ge Laboratuvarı</h2></div>
                 <div class="research-list" id="research-container"></div>
-            </section>
-
-            <!-- ACHIEVEMENTS TAB -->
-            <section id="tab-achievements" class="tab-content">
-                <div class="section-header"><h2>🏆 Başarımlar</h2></div>
-                <div class="achievements-grid" id="achievements-container"></div>
             </section>
 
             <!-- PRESTIGE TAB -->
@@ -444,35 +398,16 @@
             <!-- SETTINGS TAB -->
             <section id="tab-settings" class="tab-content">
                 <div class="section-header"><h2>⚙️ Karaborsa & Ayarlar</h2></div>
-                <h3 style="margin-bottom: 10px; color: var(--gem);">💎 Elmas Pazarı</h3>
-                <div class="black-market-grid" style="margin-bottom: 20px;">
-                    <div class="farm-card" style="border-color: var(--gem); min-height:130px;">
-                        <h3>📊 Whale Pump</h3>
-                        <p style="font-size:0.75rem; color:var(--text-muted);">Ekili ürünleri anında tavan fiyata (`x3.5`) kilitler.</p>
-                        <button class="btn btn-info" onclick="Game.buyWhalePump()">15 Elmas</button>
-                    </div>
-                    <div class="farm-card" style="border-color: var(--gem); min-height:130px;">
-                        <h3>💰 Teşvik Fonu</h3>
-                        <p style="font-size:0.75rem; color:var(--text-muted);">Hacme bağlı hibe altın ekler.</p>
-                        <button class="btn btn-info" onclick="Game.buyGoldBoost()">10 Elmas</button>
-                    </div>
-                    <div class="farm-card" style="border-color: var(--gem); min-height:130px;">
-                        <h3>🎰 Spekülasyon</h3>
-                        <p style="font-size:0.75rem; color:var(--text-muted);">Tüm piyasayı manipüle eder.</p>
-                        <button class="btn btn-info" onclick="Game.buyMarketManipulate()">5 Elmas</button>
-                    </div>
-                </div>
-                <hr style="border:1px solid var(--border-color); margin-bottom:15px;">
                 <button id="btn-save-game" class="btn btn-success" style="margin-right:5px;">Manuel Kaydet</button>
                 <button id="btn-hard-reset" class="btn btn-danger">Sıfırla</button>
             </section>
         </main>
     </div>
 
-    <!-- 📱 MOBİL BOTTOM NAV BAR (SADECE MOBİLDE GÖZÜKÜR) -->
+    <!-- 📱 MOBİL BOTTOM NAV BAR -->
     <nav class="mobile-nav" id="mobile-nav-bar">
         <button class="mobile-nav-btn active" data-tab="farm"><span>🌾</span>Tarla</button>
-        <button class="mobile-nav-btn" data-tab="quests"><span>📜</span>Görev</button>
+        <button class="mobile-nav-btn" data-tab="ranking"><span>📊</span>Skor</button>
         <button class="mobile-nav-btn" data-tab="market"><span>⚖️</span>Borsa</button>
         <button class="mobile-nav-btn" data-tab="factory"><span>🏭</span>Sanayi</button>
         <button class="mobile-nav-btn" data-tab="research"><span>🔬</span>Ar-Ge</button>
@@ -482,6 +417,15 @@
     <div id="toast-container"></div>
 
     <script>
+        // ⚠️ SUPABASE BAĞLANTI AYARLARI (Kendi bilgilerinizle doldurun)
+        const SUPABASE_URL = "https://vnwedmavyikpfpnzqyfl.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_zMmTJUNDDPmSen3c4bTfGQ_psotehPa";
+        
+        let supabaseClient = null;
+        if(SUPABASE_URL.indexOf("YOUR_") === -1) {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        }
+
         const CROPS_DATA = [
             { id: "wheat", name: "Buğday", basePrice: 30, icon: "🌾" },
             { id: "barley", name: "Arpa", basePrice: 45, icon: "🌾" },
@@ -515,13 +459,6 @@
             { id: "future_market", name: "Vadeli İşlemler Borsası", cost: 300000, desc: "Borsa taban sınırını korur." }
         ];
 
-        const ACHIEVEMENTS_DATA = [
-            { id: "gold_1", category: "gold", target: 500, title: "İlk Sermaye", desc: "500 Altın kazan.", reward: 5 },
-            { id: "gold_2", category: "gold", target: 50000, title: "Tarım Baronu", desc: "50.000 Altın kazan.", reward: 25 },
-            { id: "harvest_1", category: "harvest", target: 30, title: "Hasat Ustası", desc: "30 kez hasat yap.", reward: 10 },
-            { id: "harvest_2", category: "harvest", target: 300, title: "Endüstriyel Dev", desc: "300 kez hasat yap.", reward: 50 }
-        ];
-
         const PRESTIGE_SHOP_DATA = [
             { id: "token_multiplier", name: "Kozmik Gelir Çarpanı", baseCost: 1, desc: "Kalıcı olarak tüm satış gelirlerini %50 artırır." },
             { id: "token_auto_speed", name: "Drone Motor Gücü", baseCost: 2, desc: "Otomatik hasat drone'larının hızını %30 artırır." },
@@ -529,25 +466,20 @@
         ];
 
         const QUEST_TEMPLATES = [
-            { type: "harvest_wheat", text: "20 adet Buğday hasat et", target: 20, rewardGold: 400, rewardGem: 2 },
-            { type: "harvest_barley", text: "15 adet Arpa hasat et", target: 15, rewardGold: 600, rewardGem: 3 },
-            { type: "harvest_corn", text: "12 adet Mısır hasat et", target: 12, rewardGold: 800, rewardGem: 4 },
-            { type: "harvest_potato", text: "10 adet Patates hasat et", target: 10, rewardGold: 1000, rewardGem: 5 },
-            { type: "harvest_carrot", text: "8 adet Havuç hasat et", target: 8, rewardGold: 1500, rewardGem: 6 },
-            { type: "earn_gold", text: "Borsadan 5000 Altın kazan", target: 5000, rewardGold: 800, rewardGem: 3 },
             { type: "harvest_any", text: "Toplamda 40 ekin topla", target: 40, rewardGold: 1200, rewardGem: 4 },
-            { type: "spend_gems", text: "Karaborsada 5 Elmas harca", target: 5, rewardGold: 2000, rewardGem: 1 }
+            { type: "earn_gold", text: "Borsadan 5000 Altın kazan", target: 5000, rewardGold: 800, rewardGem: 3 }
         ];
 
         const Game = {
             isRunning: false,
-            saveKey: "CiftlikTycoon_GlobalSave_v21",
+            saveKey: "CiftlikTycoon_GlobalSave_v22",
             state: {
+                username: "",
                 gold: 150, gems: 0, tokens: 0,
-                totals: { goldEarned: 0, cropsHarvested: 0, wheatHarvested: 0, potatoHarvested: 0, carrotHarvested: 0, builtFactories: 0, doneResearch: 0 },
+                totals: { goldEarned: 0, cropsHarvested: 0 },
                 fields: { 1: { cropId: "wheat", progress: 0 } },
                 unlockedFields: [1],
-                research: [], unlockedFactories: [], unlockedAchievements: [],
+                research: [], unlockedFactories: [],
                 factoryStatus: {},
                 marketFluctuations: {},
                 prestigeUpgrades: { token_multiplier: 0, token_auto_speed: 0, token_crit_chance: 0 },
@@ -559,52 +491,107 @@
                 if (saved) {
                     try { 
                         let parsed = JSON.parse(saved);
-                        if (!parsed.prestigeUpgrades) parsed.prestigeUpgrades = { token_multiplier: 0, token_auto_speed: 0, token_crit_chance: 0 };
-                        if (!parsed.factoryStatus) parsed.factoryStatus = {};
-                        if (!parsed.totals) parsed.totals = { goldEarned: 0, cropsHarvested: 0, wheatHarvested: 0, potatoHarvested: 0, carrotHarvested: 0, builtFactories: 0, doneResearch: 0 };
                         this.state = parsed; 
                     } catch(e) {}
+                }
+
+                if(this.state.username) {
+                    document.getElementById("username-input").value = this.state.username;
                 }
 
                 CROPS_DATA.forEach(c => { if(!this.state.marketFluctuations[c.id]) this.state.marketFluctuations[c.id] = 1.0; });
 
                 if (!this.state.activeQuests || this.state.activeQuests.length === 0) {
                     this.state.activeQuests = [];
-                    for(let i=0; i<3; i++) { this.state.activeQuests.push(this.generateRandomQuest()); }
+                    for(let i=0; i<2; i++) { this.state.activeQuests.push(this.generateRandomQuest()); }
                 }
 
                 this.setupTabs();
                 this.setupEvents();
-                
-                if (!this.state.unlockedFields.includes(1)) this.state.unlockedFields.push(1);
-                if (!this.state.fields[1]) this.state.fields[1] = { cropId: "wheat", progress: 0 };
-
                 this.initialRenderAllTabs();
             },
 
             startApp() {
+                const inputName = document.getElementById("username-input").value.trim();
+                if(!inputName) { alert("Lütfen geçerli bir İmparatorluk Adı girin!"); return; }
+                
+                this.state.username = inputName;
                 this.isRunning = true;
+                this.save();
+
                 document.getElementById("welcome-overlay").style.opacity = "0";
                 document.getElementById("welcome-overlay").style.transform = "scale(0.95)";
                 setTimeout(() => {
                     document.getElementById("welcome-overlay").style.display = "none";
                     document.getElementById("app").style.opacity = "1";
-                    // Eğer mobil ekrandaysak bakiye panelini görünür yap
-                    if(window.innerWidth <= 768) {
-                        document.getElementById("mobile-top-stats").style.display = "flex";
-                    }
+                    if(window.innerWidth <= 768) document.getElementById("mobile-top-stats").style.display = "flex";
                 }, 500);
 
-                this.createToast("İmparatorluk Bağlantısı Sağlandı!");
+                this.createToast(`Hoş geldin, ${this.state.username}!`);
+                this.fetchLeaderboard();
+                
                 setInterval(() => this.gameTick(), 1000);
             },
 
             save() {
                 localStorage.setItem(this.saveKey, JSON.stringify(this.state));
+                this.syncWithSupabase();
+            },
+
+            // ☁️ GLOBAL BULUT SENKRONİZASYON MOTORU
+            async syncWithSupabase() {
+                if(!supabaseClient || !this.state.username) return;
+                try {
+                    await supabaseClient
+                        .from('leaderboard')
+                        .upsert(
+                            { username: this.state.username, gold_earned: this.state.totals.goldEarned },
+                            { onConflict: 'username' }
+                        );
+                } catch(e) { console.error("Bulut senkronizasyon hatası:", e); }
+            },
+
+            // 📊 SKORLARI VERİTABANINDAN ÇEKME MOTORU
+            async fetchLeaderboard() {
+                const tbody = document.getElementById("leaderboard-tbody");
+                if(!tbody) return;
+
+                if(!supabaseClient) {
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--danger);">Supabase API Key'leri eksik! index.html kodunun en altındaki URL ve KEY alanlarını tanımlayın.</td></tr>`;
+                    return;
+                }
+
+                try {
+                    let { data, error } = await supabaseClient
+                        .from('leaderboard')
+                        .select('username, gold_earned')
+                        .order('gold_earned', { ascending: false })
+                        .limit(100);
+
+                    if (error) throw error;
+
+                    tbody.innerHTML = "";
+                    if(data.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Henüz kayıtlı holding bulunmuyor.</td></tr>`;
+                        return;
+                    }
+
+                    data.forEach((row, index) => {
+                        const isMe = row.username === this.state.username ? "background: rgba(245, 158, 11, 0.1);" : "";
+                        tbody.innerHTML += `
+                            <tr style="${isMe}">
+                                <td class="rank-highlight">#${index + 1}</td>
+                                <td>${row.username} ${row.username === this.state.username ? ' <small>(Siz)</small>' : ''}</td>
+                                <td class="text-gold" style="font-weight:bold;">${this.formatNumber(row.gold_earned)}</td>
+                            </tr>
+                        `;
+                    });
+                } catch(e) {
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--danger);">Veriler çekilemedi.</td></tr>`;
+                }
             },
 
             setupTabs() {
-                // Hem Desktop hem Mobil butonları dinle
                 const allNavButtons = document.querySelectorAll(".nav-btn, .mobile-nav-btn");
                 allNavButtons.forEach(btn => {
                     btn.addEventListener("click", () => {
@@ -615,6 +602,8 @@
                         });
                         document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
                         document.getElementById(`tab-${targetTab}`).classList.add("active");
+                        
+                        if(targetTab === "ranking") this.fetchLeaderboard();
                     });
                 });
             },
@@ -622,10 +611,10 @@
             setupEvents() {
                 document.getElementById("btn-save-game").addEventListener("click", () => {
                     this.save();
-                    this.createToast("İlerleme cihaz belleğine senkronize edildi.");
+                    this.createToast("İlerleme buluta senkronize edildi.");
                 });
                 document.getElementById("btn-hard-reset").addEventListener("click", () => {
-                    if(confirm("Tüm holding verileri sıfırlanacaktır. Emin misiniz?")) {
+                    if(confirm("Tüm veriler sıfırlanacaktır. Emin misiniz?")) {
                         localStorage.removeItem(this.saveKey);
                         window.location.reload();
                     }
@@ -634,11 +623,7 @@
             },
 
             generateRandomQuest() {
-                const currentActiveTypes = this.state.activeQuests ? this.state.activeQuests.map(q => q.type) : [];
-                let availableTemplates = QUEST_TEMPLATES.filter(t => !currentActiveTypes.includes(t.type));
-                if (availableTemplates.length === 0) availableTemplates = QUEST_TEMPLATES;
-
-                const template = availableTemplates[Math.floor(Math.random() * availableTemplates.length)];
+                const template = QUEST_TEMPLATES[Math.floor(Math.random() * QUEST_TEMPLATES.length)];
                 return {
                     id: "q_" + Math.random().toString(36).substring(2, 7),
                     type: template.type,
@@ -646,8 +631,7 @@
                     target: template.target,
                     current: 0,
                     rewardGold: template.rewardGold,
-                    rewardGem: template.rewardGem,
-                    isCompleted: false
+                    rewardGem: template.rewardGem
                 };
             },
 
@@ -660,16 +644,12 @@
                         let speed = 10;
                         if(this.state.research.includes("gmo_1")) speed += 5;
                         if(this.state.research.includes("soil_analysis")) speed += 3;
-                        
-                        const droneSpeedLevel = this.state.prestigeUpgrades.token_auto_speed || 0;
-                        speed += (droneSpeedLevel * 3);
+                        speed += ((this.state.prestigeUpgrades.token_auto_speed || 0) * 3);
 
                         this.state.fields[id].progress = Math.min(100, currentProgress + speed);
-                        
                         if (this.state.fields[id].progress >= 100 && this.state.research.includes("auto_harvester_drone")) {
                             this.harvest(id, true);
                         }
-
                         const pBar = document.getElementById(`dynamic-bar-${id}`);
                         if (pBar) pBar.style.width = `${this.state.fields[id].progress}%`;
                     }
@@ -677,74 +657,19 @@
 
                 FACTORIES_DATA.forEach(fac => {
                     if (this.state.unlockedFactories.includes(fac.id) && this.state.factoryStatus[fac.id] !== false) {
-                        if (this.state.gold >= fac.maintenance) {
-                            this.state.gold -= fac.maintenance;
-                        } else {
-                            this.state.gold = 0;
-                        }
+                        this.state.gold = Math.max(0, this.state.gold - fac.maintenance);
                     }
                 });
 
                 CROPS_DATA.forEach(c => {
                     let minCap = this.state.research.includes("future_market") ? 0.8 : 0.3;
                     let currentMultiplier = this.state.marketFluctuations[c.id] || 1.0;
-
-                    let npcAction = Math.random();
-                    if (npcAction > 0.65) {
-                        currentMultiplier += (Math.random() * 0.12); 
-                    } else if (npcAction < 0.35) {
-                        currentMultiplier -= (Math.random() * 0.15); 
-                    }
-
-                    if (currentMultiplier > 2.0) currentMultiplier -= (Math.random() * 0.25);
-                    if (currentMultiplier < 0.6) currentMultiplier += (Math.random() * 0.15);
-
+                    currentMultiplier += (Math.random() > 0.5 ? 0.08 : -0.10);
                     this.state.marketFluctuations[c.id] = Math.max(minCap, Math.min(3.5, currentMultiplier));
                 });
 
-                this.checkAchievements();
                 this.updateFastStatsOnly();
                 this.save();
-            },
-
-            buyWhalePump() {
-                if (this.state.gems >= 15) {
-                    this.state.gems -= 15;
-                    this.state.unlockedFields.forEach(id => {
-                        if (this.state.fields[id]) {
-                            const cId = this.state.fields[id].cropId;
-                            this.state.marketFluctuations[cId] = 3.5;
-                        }
-                    });
-                    this.state.activeQuests.forEach(q => { if (q.type === "spend_gems") q.current = Math.min(q.target, q.current + 15); });
-                    this.createToast("📊 BALİNA DESTEĞİ: Fiyatlar kilitlendi!");
-                    this.save();
-                    this.updateFastStatsOnly();
-                } else { this.createToast("Yetersiz Elmas!"); }
-            },
-
-            buyGoldBoost() {
-                if (this.state.gems >= 10) {
-                    this.state.gems -= 10;
-                    const bonusGold = Math.max(1000, Math.floor(this.state.totals.goldEarned * 0.2));
-                    this.state.gold += bonusGold;
-                    this.state.totals.goldEarned += bonusGold;
-                    this.state.activeQuests.forEach(q => { if (q.type === "spend_gems") q.current = Math.min(q.target, q.current + 10); });
-                    this.createToast(`💰 Fon aktarıldı: +${this.formatNumber(bonusGold)} Altın.`);
-                    this.save();
-                    this.updateFastStatsOnly();
-                } else { this.createToast("Yetersiz Elmas!"); }
-            },
-
-            buyMarketManipulate() {
-                if (this.state.gems >= 5) {
-                    this.state.gems -= 5;
-                    CROPS_DATA.forEach(c => { this.state.marketFluctuations[c.id] = 3.5; });
-                    this.state.activeQuests.forEach(q => { if (q.type === "spend_gems") q.current = Math.min(q.target, q.current + 5); });
-                    this.createToast("🎰 Borsa manipüle edildi!");
-                    this.save();
-                    this.updateFastStatsOnly();
-                } else { this.createToast("Yetersiz Elmas!"); }
             },
 
             toggleFactory(id) {
@@ -768,7 +693,6 @@
                         } else {
                             const fState = this.state.fields[f.id] || { cropId: "wheat", progress: 0 };
                             const crop = CROPS_DATA.find(c => c.id === fState.cropId) || CROPS_DATA[0];
-                            
                             card.innerHTML = `
                                 <div>
                                     <h3 id="field-title-${f.id}">${f.name} ${crop.icon}</h3>
@@ -787,7 +711,22 @@
                     });
                 }
 
-                this.renderPrestigeShop();
+                const sContainer = document.getElementById("prestige-shop-container");
+                if (sContainer) {
+                    sContainer.innerHTML = "";
+                    PRESTIGE_SHOP_DATA.forEach(item => {
+                        const currentLevel = this.state.prestigeUpgrades[item.id] || 0;
+                        const cost = item.baseCost + currentLevel; 
+                        sContainer.innerHTML += `
+                            <div class="farm-card" style="border-color: var(--token);">
+                                <h3>👑 ${item.name}</h3>
+                                <p style="font-size:0.75rem; color: var(--text-muted); margin-bottom:5px;">${item.desc}</p>
+                                <small style="display:block; margin-bottom:10px; color: var(--success);">Seviye ${currentLevel}</small>
+                                <button class="btn btn-token-style" onclick="Game.buyPrestigeUpgrade('${item.id}', ${cost})">Yükselt: ${cost}</button>
+                            </div>
+                        `;
+                    });
+                }
 
                 const factoryContainer = document.getElementById("factory-container");
                 if (factoryContainer) {
@@ -795,31 +734,14 @@
                     FACTORIES_DATA.forEach(fac => {
                         const isBuilt = this.state.unlockedFactories.includes(fac.id);
                         const isWorking = this.state.factoryStatus[fac.id] !== false;
-                        
-                        let actionButtonHTML = "";
-                        if (!isBuilt) {
-                            actionButtonHTML = `<button class="btn btn-warning" onclick="Game.buyFactory('${fac.id}', ${fac.cost})">Kurulum: ${fac.cost}</button>`;
-                        } else {
-                            actionButtonHTML = `
+                        let actionButtonHTML = !isBuilt ? `<button class="btn btn-warning" onclick="Game.buyFactory('${fac.id}', ${fac.cost})">Kurulum: ${fac.cost}</button>` : `
                                 <div style="display:flex; gap:8px; width:100%;">
                                     <button class="btn btn-success" disabled style="flex-grow:1;">✅ Aktif</button>
-                                    <button class="btn ${isWorking ? 'btn-danger' : 'btn-warning'}" onclick="Game.toggleFactory('${fac.id}')" style="width:75px;">
-                                        ${isWorking ? '🛑 Kapat' : '⚡ Aç'}
-                                    </button>
+                                    <button class="btn ${isWorking ? 'btn-danger' : 'btn-warning'}" onclick="Game.toggleFactory('${fac.id}')" style="width:75px;">${isWorking ? '🛑 Kapat' : '⚡ Aç'}</button>
                                 </div>`;
-                        }
-
-                        factoryContainer.innerHTML += `
-                            <div class="farm-card" style="border-color: ${isBuilt && isWorking ? 'var(--success)' : 'var(--border-color)'};">
-                                <div>
-                                    <h3>🏭 ${fac.name}</h3>
-                                    <small style="color:var(--gold); display:block; margin: 4px 0;">${fac.bonus}</small>
-                                </div>
-                                <div style="margin-bottom:8px;">
-                                    <span style="font-size:0.75rem; color:${isWorking && isBuilt ? 'var(--danger)' : 'var(--text-muted)'}; font-weight:bold;">
-                                        Gider: -${this.formatNumber(fac.maintenance)}/Sn
-                                    </span>
-                                </div>
+                        factoryContainer.innerHTML += `<div class="farm-card" style="border-color: ${isBuilt && isWorking ? 'var(--success)' : 'var(--border-color)'};">
+                                <div><h3>🏭 ${fac.name}</h3><small style="color:var(--gold); display:block; margin: 4px 0;">${fac.bonus}</small></div>
+                                <div style="margin-bottom:8px;"><span style="font-size:0.75rem; color:${isWorking && isBuilt ? 'var(--danger)' : 'var(--text-muted)'}; font-weight:bold;">Gider: -${this.formatNumber(fac.maintenance)}/Sn</span></div>
                                 ${actionButtonHTML}
                             </div>`;
                     });
@@ -830,49 +752,25 @@
                     resContainer.innerHTML = "";
                     RESEARCH_DATA.forEach(res => {
                         const isDone = this.state.research.includes(res.id);
-                        resContainer.innerHTML += `
-                            <div class="farm-card">
+                        resContainer.innerHTML += `<div class="farm-card">
                                 <h3>🔬 ${res.name}</h3>
                                 <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">${res.desc}</p>
-                                <button id="res-btn-${res.id}" class="btn ${isDone ? 'btn-success' : 'btn-info'}" ${isDone ? 'disabled' : ''} onclick="Game.buyResearch('${res.id}', ${res.cost})">
-                                    ${isDone ? '🔬 Araştırıldı' : `Ar-Ge: ${res.cost}`}
-                                </button>
+                                <button class="btn ${isDone ? 'btn-success' : 'btn-info'}" ${isDone ? 'disabled' : ''} onclick="Game.buyResearch('${res.id}', ${res.cost})">${isDone ? '🔬 Araştırıldı' : `Ar-Ge: ${res.cost}`}</button>
                             </div>`;
                     });
                 }
-            },
-
-            renderPrestigeShop() {
-                const sContainer = document.getElementById("prestige-shop-container");
-                if (!sContainer) return;
-                sContainer.innerHTML = "";
-                PRESTIGE_SHOP_DATA.forEach(item => {
-                    const currentLevel = this.state.prestigeUpgrades[item.id] || 0;
-                    const cost = item.baseCost + currentLevel; 
-                    sContainer.innerHTML += `
-                        <div class="farm-card" style="border-color: var(--token);">
-                            <h3>👑 ${item.name}</h3>
-                            <p style="font-size:0.75rem; color: var(--text-muted); margin-bottom:5px;">${item.desc}</p>
-                            <small style="display:block; margin-bottom:10px; color: var(--success);">Seviye ${currentLevel}</small>
-                            <button class="btn btn-token-style" onclick="Game.buyPrestigeUpgrade('${item.id}', ${cost})">Yükselt: ${cost} Jeton</button>
-                        </div>
-                    `;
-                });
             },
 
             buyPrestigeUpgrade(id, cost) {
                 if (this.state.tokens >= cost) {
                     this.state.tokens -= cost;
                     this.state.prestigeUpgrades[id] = (this.state.prestigeUpgrades[id] || 0) + 1;
-                    this.createToast("Geliştirme yapıldı.");
                     this.save();
-                    this.renderPrestigeShop();
-                    this.updateFastStatsOnly();
-                } else { this.createToast("Yetersiz Jeton!"); }
+                    this.initialRenderAllTabs();
+                }
             },
 
             updateFastStatsOnly() {
-                // Hem masaüstü hem mobil stats alanlarını güncelle
                 const goldStr = this.formatNumber(this.state.gold);
                 const gemStr = this.formatNumber(this.state.gems);
                 const tokenStr = this.formatNumber(this.state.tokens);
@@ -880,7 +778,6 @@
                 document.getElementById("stat-gold").innerText = goldStr;
                 document.getElementById("stat-gems").innerText = gemStr;
                 document.getElementById("stat-tokens").innerText = tokenStr;
-
                 document.getElementById("m-stat-gold").innerText = goldStr;
                 document.getElementById("m-stat-gems").innerText = gemStr;
                 document.getElementById("m-stat-tokens").innerText = tokenStr;
@@ -892,19 +789,11 @@
                 if (qContainer) {
                     qContainer.innerHTML = "";
                     this.state.activeQuests.forEach((q, idx) => {
-                        qContainer.innerHTML += `
-                            <div class="farm-card" style="border-left: 4px solid var(--gem); min-height: 160px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <h4>📜 Kontrat</h4>
-                                    <span style="cursor:pointer; color: var(--danger); font-size: 1.1rem;" onclick="Game.cancelAndReplaceQuest(${idx})">🗑️</span>
-                                </div>
+                        qContainer.innerHTML += `<div class="farm-card" style="border-left: 4px solid var(--gem); min-height: 140px;">
                                 <p style="font-size:0.8rem; margin:4px 0;">${q.text}</p>
                                 <small style="display:block; margin-bottom:8px; color:var(--gold); font-weight: bold;">${q.current} / ${q.target}</small>
-                                <button class="btn btn-info" ${q.current >= q.target ? '' : 'disabled'} onclick="Game.claimQuest('${q.id}')">
-                                    ${q.current >= q.target ? '🎁 Ödülü Al' : '🛠️ Sürüyor'}
-                                </button>
-                            </div>
-                        `;
+                                <button class="btn btn-info" ${q.current >= q.target ? '' : 'disabled'} onclick="Game.claimQuest('${q.id}')">${q.current >= q.target ? '🎁 Ödülü Al' : '🛠️ Sürüyor'}</button>
+                            </div>`;
                     });
                 }
 
@@ -913,60 +802,30 @@
                     mContainer.innerHTML = "";
                     CROPS_DATA.forEach(c => {
                         const multiplier = this.state.marketFluctuations[c.id] || 1.0;
-                        const dynamicPrice = Math.round(c.basePrice * multiplier);
-                        mContainer.innerHTML += `
-                            <div class="farm-card" style="min-height:110px;">
+                        mContainer.innerHTML += `<div class="farm-card" style="min-height:100px;">
                                 <h3>${c.icon} ${c.name}</h3>
-                                <p>Fiyat: <b class="text-gold">${dynamicPrice}</b></p>
-                                <small style="color:${multiplier >= 1.2 ? 'var(--success)' : 'var(--danger)'}">Güç: x${multiplier.toFixed(2)}</small>
+                                <p>Fiyat: <b class="text-gold">${Math.round(c.basePrice * multiplier)}</b></p>
                             </div>`;
                     });
                 }
-
-                const achContainer = document.getElementById("achievements-container");
-                if (achContainer) {
-                    achContainer.innerHTML = "";
-                    ACHIEVEMENTS_DATA.forEach(ach => {
-                        const isUnlocked = this.state.unlockedAchievements.includes(ach.id);
-                        achContainer.innerHTML += `
-                            <div class="farm-card" style="opacity:${isUnlocked ? 1 : 0.6}; min-height:110px;">
-                                <h3>${isUnlocked ? '🏆' : '🔒'} ${ach.title}</h3>
-                                <small style="color:var(--gem)">+${ach.reward} Elmas</small>
-                            </div>`;
-                    });
-                }
-            },
-
-            cancelAndReplaceQuest(index) {
-                this.state.activeQuests[index] = this.generateRandomQuest();
-                this.createToast("Kontrat yenilendi.");
-                this.save();
-                this.updateFastStatsOnly();
             },
 
             claimQuest(questId) {
                 const qIdx = this.state.activeQuests.findIndex(q => q.id === questId);
                 if (qIdx === -1) return;
                 const quest = this.state.activeQuests[qIdx];
-
-                if (quest.current >= quest.target) {
-                    this.state.gold += quest.rewardGold;
-                    this.state.gems += quest.rewardGem;
-                    this.createToast(`Ödül alındı!`);
-                    this.state.activeQuests[qIdx] = this.generateRandomQuest();
-                    this.save();
-                    this.updateFastStatsOnly();
-                }
+                this.state.gold += quest.rewardGold;
+                this.state.gems += quest.rewardGem;
+                this.state.activeQuests[qIdx] = this.generateRandomQuest();
+                this.save();
             },
 
             changeCrop(fieldId, cropId) {
                 if (this.state.fields[fieldId]) {
                     this.state.fields[fieldId].cropId = cropId;
                     this.state.fields[fieldId].progress = 0;
-                    const crop = CROPS_DATA.find(c => c.id === cropId);
-                    document.getElementById(`field-title-${fieldId}`).innerText = `${FIELDS_DATA.find(f => f.id === fieldId).name} ${crop.icon}`;
-                    document.getElementById(`field-cropname-${fieldId}`).innerText = crop.name;
                     this.save();
+                    this.initialRenderAllTabs();
                 }
             },
 
@@ -975,89 +834,61 @@
                     this.state.gold -= cost;
                     this.state.unlockedFields.push(id);
                     this.state.fields[id] = { cropId: "wheat", progress: 0 };
-                    this.createToast("Yeni arazi açıldı!");
                     this.save();
                     this.initialRenderAllTabs(); 
-                } else { this.createToast("Yetersiz altın!"); }
+                }
             },
 
             buyFactory(id, cost) {
                 if (this.state.gold >= cost) {
                     this.state.gold -= cost;
                     this.state.unlockedFactories.push(id);
-                    this.state.totals.builtFactories += 1;
                     this.state.factoryStatus[id] = true; 
-                    this.createToast("Fabrika kuruldu!");
                     this.save();
                     this.initialRenderAllTabs();
-                } else { this.createToast("Yetersiz altın!"); }
+                }
             },
 
             buyResearch(id, cost) {
                 if (this.state.gold >= cost) {
                     this.state.gold -= cost;
                     this.state.research.push(id);
-                    this.state.totals.doneResearch += 1;
-                    this.createToast("Ar-Ge onaylandı!");
                     this.save();
                     this.initialRenderAllTabs();
-                } else { this.createToast("Yetersiz altın!"); }
+                }
             },
 
             harvest(id, isAuto = false) {
                 const fState = this.state.fields[id];
-                if (!fState || (fState.progress || 0) < 100) return;
+                if (!fState || fState.progress < 100) return;
                 const crop = CROPS_DATA.find(c => c.id === fState.cropId);
                 
-                const marketMultiplier = this.state.marketFluctuations[crop.id] || 1.0;
-                let baseGain = crop.basePrice * marketMultiplier;
-
+                let baseGain = crop.basePrice * (this.state.marketFluctuations[crop.id] || 1.0);
                 if(this.state.unlockedFactories.includes("flour_mill") && this.state.factoryStatus["flour_mill"] !== false && crop.id === "wheat") baseGain *= 2.0;
                 if(this.state.unlockedFactories.includes("starch_factory") && this.state.factoryStatus["starch_factory"] !== false && crop.id === "potato") baseGain *= 2.2;
                 if(this.state.unlockedFactories.includes("brewery") && this.state.factoryStatus["brewery"] !== false && crop.id === "barley") baseGain *= 2.5;
                 if(this.state.unlockedFactories.includes("oil_refinery") && this.state.factoryStatus["oil_refinery"] !== false && crop.id === "corn") baseGain *= 3.0;
                 if(this.state.unlockedFactories.includes("packaging_plant") && this.state.factoryStatus["packaging_plant"] !== false && crop.id === "carrot") baseGain *= 3.5;
 
-                if(this.state.research.includes("logistics_opt")) baseGain *= 1.15;
-
-                const tokenMultLevel = this.state.prestigeUpgrades.token_multiplier || 0;
-                baseGain *= (1 + (tokenMultLevel * 0.50));
-
-                const fontCritChance = this.state.prestigeUpgrades.token_crit_chance || 0;
-                if (Math.random() < (fontCritChance * 0.05)) { baseGain *= 3; }
-
+                baseGain *= (1 + ((this.state.prestigeUpgrades.token_multiplier || 0) * 0.50));
                 const finalGain = Math.round(baseGain);
+
                 this.state.gold += finalGain;
                 this.state.totals.goldEarned += finalGain;
-                this.state.totals.cropsHarvested += 1;
-
-                let minCap = this.state.research.includes("future_market") ? 0.9 : 0.3;
-                this.state.marketFluctuations[crop.id] = Math.max(minCap, this.state.marketFluctuations[crop.id] - 0.25);
 
                 this.state.activeQuests.forEach(q => {
                     if (q.type === "harvest_any") q.current = Math.min(q.target, q.current + 1);
                     if (q.type === "earn_gold") q.current = Math.min(q.target, q.current + finalGain);
-                    if (q.type === "harvest_wheat" && crop.id === "wheat") q.current = Math.min(q.target, q.current + 1);
-                    if (q.type === "harvest_barley" && crop.id === "barley") q.current = Math.min(q.target, q.current + 1);
-                    if (q.type === "harvest_corn" && crop.id === "corn") q.current = Math.min(q.target, q.current + 1);
-                    if (q.type === "harvest_potato" && crop.id === "potato") q.current = Math.min(q.target, q.current + 1);
-                    if (q.type === "harvest_carrot" && crop.id === "carrot") q.current = Math.min(q.target, q.current + 1);
                 });
-
-                if(this.state.research.includes("genetic_cross") && Math.random() < 0.03) {
-                    this.state.gems += 1;
-                    this.createToast("🧬 +1 Elmas!");
-                }
 
                 fState.progress = 0;
                 this.save();
-                if(!isAuto) { this.createToast(`+${finalGain} Altın. Borsa düştü!`); }
+                if(!isAuto) this.createToast(`+${finalGain} Altın.`);
             },
 
             triggerPrestige() {
                 const gain = Math.floor(Math.sqrt(this.state.totals.goldEarned / 2000));
-                if (gain < 1) { this.createToast("Yetersiz sermaye hacmi!"); return; }
-                
+                if (gain < 1) return;
                 this.state.tokens += gain;
                 this.state.gold = 150;
                 this.state.unlockedFields = [1];
@@ -1066,25 +897,8 @@
                 this.state.fields = { 1: { cropId: "wheat", progress: 0 } };
                 this.state.activeQuests = [];
                 this.state.factoryStatus = {};
-                
-                localStorage.setItem(this.saveKey, JSON.stringify(this.state));
+                this.save();
                 window.location.reload();
-            },
-
-            checkAchievements() {
-                ACHIEVEMENTS_DATA.forEach(a => {
-                    if (this.state.unlockedAchievements.includes(a.id)) return;
-                    let pass = false;
-                    if (a.category === "gold" && this.state.totals.goldEarned >= a.target) pass = true;
-                    if (a.category === "harvest" && this.state.totals.cropsHarvested >= a.target) pass = true;
-
-                    if (pass) {
-                        this.state.unlockedAchievements.push(a.id);
-                        this.state.gems += a.reward;
-                        this.createToast(`🏆 BAŞARIM: ${a.title}`);
-                        this.save();
-                    }
-                });
             },
 
             formatNumber(num) {
@@ -1097,8 +911,7 @@
                 const container = document.getElementById("toast-container");
                 if (!container) return;
                 const t = document.createElement("div");
-                t.className = "toast";
-                t.innerText = msg;
+                t.className = "toast"; t.innerText = msg;
                 container.appendChild(t);
                 setTimeout(() => t.remove(), 2200);
             }
