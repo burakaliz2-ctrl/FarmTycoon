@@ -6,7 +6,7 @@
     <title>Çiftlik İmparatorluğu Tycoon - v2.3.0 Bulut Hesap Sistemi</title>
     <!-- Supabase CDN Bağlantısı -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
+ <style>
         :root {
             --bg-primary: #12181f;
             --bg-secondary: #1a232d;
@@ -318,19 +318,63 @@
         #toast-container { position: fixed; bottom: 75px; right: 15px; left: 15px; z-index: 10000; display: flex; flex-direction: column; gap: 6px; max-width: 350px; margin-left: auto; }
         .toast { background: var(--bg-secondary); border-left: 4px solid var(--gold); color: var(--text-main); padding: 10px 12px; font-size: 0.75rem; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
-        @media (max-width: 768px) {
-            #app { flex-direction: column; }
-            .sidebar { display: none; }
-            .mobile-nav { display: flex; }
-            .mobile-top-bar { display: flex; }
-            .main-content { height: calc(100vh - 120px); padding: 12px 10px; }
-            .farm-grid, .market-grid, .factory-grid, .research-list, .achievements-grid, .prestige-shop-grid, .quest-list, .black-market-grid {
-                grid-template-columns: 1fr;
-            }
-            .section-header h2 { font-size: 1.1rem; }
-            .farm-card { min-height: 140px; padding: 12px; }
-            .btn { padding: 12px; font-size: 0.8rem; }
-        }
+@media (max-width: 768px) {
+    #app { flex-direction: column; }
+    .sidebar { display: none; }
+    
+    /* ALT MENÜ SIKIŞTIRMA AYARLARI */
+    .mobile-nav {
+        display: flex !important;
+        flex-direction: column !important; /* Satırlara bölmek için */
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 70px !important; /* Yükseklik arttı */
+        background-color: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        padding: 0 !important;
+    }
+    
+    .nav-row {
+        display: flex;
+        width: 100%;
+        height: 50%;
+    }
+
+    .mobile-nav-btn {
+        flex: 1;
+        font-size: 0.55rem !important; /* Yazı biraz daha küçüldü */
+        padding: 1px !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+    }
+
+    .mobile-nav-btn span {
+        font-size: 0.85rem !important; /* İkon küçüldü */
+        margin-bottom: 0 !important;
+    }
+
+    /* İÇERİK DÜZENİ */
+    .main-content { height: calc(100vh - 130px) !important; padding: 12px 10px; }
+    
+    .farm-grid, .market-grid, .factory-grid, .research-list, .achievements-grid, .prestige-shop-grid, .quest-list, .black-market-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* KARABORSA DÜZENİ (Ayarlar Sekmesindeki) */
+    .black-market-grid {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .section-header h2 { font-size: 1.1rem; }
+    .farm-card { min-height: 140px; padding: 12px; }
+    .btn { padding: 8px; font-size: 0.75rem; }
+}
     </style>
 </head>
 <body>
@@ -446,46 +490,57 @@
 
             <!-- SETTINGS TAB -->
             <section id="tab-settings" class="tab-content">
-                <div class="section-header"><h2>⚙️ Karaborsa & Sistem Ayarları</h2></div>
-                
-                <h3 style="margin-bottom: 12px; color: var(--gem); font-size: 1rem;">💎 Premium Elmas Harcama Pazarı (Karaborsa)</h3>
-                <div class="black-market-grid" style="margin-bottom: 25px;">
-                    <div class="farm-card" style="border-color: var(--gem); min-height:130px;">
-                        <h3>📊 Whale Pump</h3>
-                        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom: 8px;">Ekili ürünleri borsada anında tavan fiyata (`x3.5`) kilitler.</p>
-                        <button class="btn btn-info" onclick="Game.buyWhalePump()">Harca: 15 Elmas</button>
-                    </div>
-                    <div class="farm-card" style="border-color: var(--gem); min-height:130px;">
-                        <h3>💰 Teşvik Fonu</h3>
-                        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom: 8px;">Kasaya anında hibe altın ekler.</p>
-                        <button class="btn btn-info" onclick="Game.buyGoldBoost()">Harca: 10 Elmas</button>
-                    </div>
-                    <div class="farm-card" style="border-color: var(--gem); min-height:130px;">
-                        <h3>🎰 Spekülasyon</h3>
-                        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom: 8px;">Tüm borsa fiyatlarını anında zirve çarpanına eşitler.</p>
-                        <button class="btn btn-info" onclick="Game.buyMarketManipulate()">Harca: 5 Elmas</button>
-                    </div>
-                </div>
+    
+    <div id="karaborsa-wrapper">
+        <div class="section-header"><h2>💎 Karaborsa</h2></div>
+        <div class="black-market-grid" style="margin-bottom: 25px;">
+    <!-- WHALE PUMP -->
+    <div class="farm-card" style="border-color: var(--gem);">
+        <h3>📊 Whale Pump</h3>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin: 5px 0;">Tüm ürün fiyatlarını tavan seviyeye çeker.</p>
+        <button class="btn btn-info" onclick="Game.buyWhalePump()">Harca: 15 Elmas</button>
+    </div>
+    <!-- TEŞVİK FONU -->
+    <div class="farm-card" style="border-color: var(--gem);">
+        <h3>💰 Teşvik Fonu</h3>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin: 5px 0;">Anında altın desteği sağlar.</p>
+        <button class="btn btn-info" onclick="Game.buyGoldBoost()">Harca: 10 Elmas</button>
+    </div>
+    <!-- SPEKÜLASYON -->
+    <div class="farm-card" style="border-color: var(--gem);">
+        <h3>🎰 Spekülasyon</h3>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin: 5px 0;">Piyasadaki fiyatları rastgele günceller.</p>
+        <button class="btn btn-info" onclick="Game.buyMarketManipulate()">Harca: 5 Elmas</button>
+    </div>
+</div>
+    </div>
 
-                <hr style="border:1px solid var(--border-color); margin-bottom:15px;">
-                <h3 style="margin-bottom: 10px; font-size: 1rem;">Sistem Kontrolleri</h3>
-                <div style="display: flex; gap: 8px;">
-                    <button id="btn-save-game" class="btn btn-success" style="flex: 1;">Manuel Kaydet</button>
-                    <button id="btn-hard-reset" class="btn btn-danger" style="flex: 1;">Hesabı & Verileri Sıfırla</button>
-                </div>
-            </section>
+    <div id="settings-wrapper">
+        <div class="section-header"><h2>⚙️ Sistem Ayarları</h2></div>
+        <div style="display: flex; gap: 8px;">
+            <button id="btn-save-game" class="btn btn-success" style="flex: 1;">Manuel Kaydet</button>
+            <button id="btn-hard-reset" class="btn btn-danger" style="flex: 1;">Hesabı Sıfırla</button>
+        </div>
+    </div>
+</section>
         </main>
     </div>
 
     <!-- 📱 MOBİL BOTTOM NAV BAR -->
-    <nav class="mobile-nav" id="mobile-nav-bar">
+<nav class="mobile-nav" id="mobile-nav-bar">
+    <div class="nav-row">
         <button class="mobile-nav-btn active" data-tab="farm"><span>🌾</span>Tarla</button>
         <button class="mobile-nav-btn" data-tab="ranking"><span>📊</span>Skor</button>
         <button class="mobile-nav-btn" data-tab="quests"><span>📜</span>Görev</button>
+    </div>
+    <div class="nav-row">
         <button class="mobile-nav-btn" data-tab="market"><span>⚖️</span>Borsa</button>
         <button class="mobile-nav-btn" data-tab="factory"><span>🏭</span>Sanayi</button>
         <button class="mobile-nav-btn" data-tab="research"><span>🔬</span>Ar-Ge</button>
-    </nav>
+        <button class="mobile-nav-btn" data-tab="prestige"><span>👑</span>Prestij</button>
+        <button class="mobile-nav-btn" data-tab="settings"><span>⚙️</span>Ayarlar</button>
+    </div>
+</nav>
 
     <div id="toast-container"></div>
 
