@@ -217,3 +217,29 @@ body {
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
 }
+
+/* ChatGPT mobile fixes */
+html,body{
+overflow-x:hidden !important;
+overflow-y:auto !important;
+width:100%;
+}
+
+.page-content,.content,.main-content,#content{
+padding-bottom:120px !important;
+min-height:100vh !important;
+box-sizing:border-box;
+}
+
+.farm-container,.fields-container,.tab-content{
+overflow-y:auto !important;
+padding-bottom:120px !important;
+}
+
+@media (max-width:768px){
+.farm-card,.card{
+width:100% !important;
+max-width:100% !important;
+box-sizing:border-box !important;
+}
+}

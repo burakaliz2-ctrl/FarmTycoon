@@ -13,6 +13,11 @@ async init() {
     // 3. Güvenlik Kontrolü: State boşsa veya görevler yoksa
     if (!this.state.activeQuests || this.state.activeQuests.length === 0) {
         this.state.activeQuests = [];
+if(typeof QuestModule!=='undefined'){
+if(QuestModule.generateContracts) QuestModule.generateContracts();
+if(QuestModule.generateDailyContracts) QuestModule.generateDailyContracts();
+if(QuestModule.refreshContracts) QuestModule.refreshContracts();
+}
         for(let i = 0; i < 3; i++) {
             this.state.activeQuests.push(this.generateRandomQuest());
         }
@@ -60,6 +65,11 @@ triggerPrestige: () => {
     state.fields = { 1: { cropId: "wheat", progress: 0 } };
     state.factoryStatus = {};
     state.activeQuests = [];
+if(typeof QuestModule!=='undefined'){
+if(QuestModule.generateContracts) QuestModule.generateContracts();
+if(QuestModule.generateDailyContracts) QuestModule.generateDailyContracts();
+if(QuestModule.refreshContracts) QuestModule.refreshContracts();
+}
     
     for(let i = 0; i < 3; i++) {
         state.activeQuests.push(Game.generateRandomQuest());
