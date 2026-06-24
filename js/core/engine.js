@@ -30,7 +30,7 @@ async init() {
     window.addEventListener('beforeunload', () => SaveSystem.save(this.state));
 
     this.updateUI();
-},,
+},
 
     generateRandomQuest() {
         const templates = [
@@ -67,7 +67,7 @@ triggerPrestige: () => {
 
     SaveSystem.save(state);
     window.location.reload();
-},,
+},
 
     claimQuest(index) {
         const quest = this.state.activeQuests[index];
