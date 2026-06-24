@@ -3,31 +3,38 @@ const Game = {
     lastTick: Date.now(),
     tickRate: 1000, // 1 Saniye hedefi
 
-    init() {
-        this.state = SaveSystem.load();
-        EconomyEngine.init();
-        UIModule.initTabs();
-        this.setupEventListeners();
-if (!this.state.activeQuests || this.state.activeQuests.length === 0) {
+init() {
+    this.state = SaveSystem.load();
+    
+    // GÜVENLİK: Eğer state'te activeQuests yoksa veya boşsa, hemen üret
+    if (!this.state.activeQuests || this.state.activeQuests.length === 0) {
         this.state.activeQuests = [];
         for(let i = 0; i < 3; i++) {
             this.state.activeQuests.push(this.generateRandomQuest());
         }
-        // Çevrimdışı İlerleme
-        this.calculateOfflineProgress();
+        SaveSystem.save(this.state); // Hemen kaydet ki prestijden sonra boş kalmasın
+    }
 
-        // Döngüyü başlat
-        this.gameLoop();
+    EconomyEngine.init();
+    UIModule.initTabs();
+    this.setupEventListeners();
+    
+    this.calculateOfflineProgress();
+    this.gameLoop();
 
-        // Otomatik Kayıt (30 Saniye)
-        setInterval(() => SaveSystem.save(this.state), 30000);
+    setInterval(() => SaveSystem.save(this.state), 30000);
+    window.addEventListener('beforeunload', () => SaveSystem.save(this.state));
 
-        // Sekme kapanırken veya yenilenirken kaydet
-        window.addEventListener('beforeunload', () => SaveSystem.save(this.state));
-
-        this.updateUI();
-    },
-
+    this.updateUI();
+},
+generateRandomQuest() {
+    const templates = [
+        { type: "harvest", text: "20 Buğday hasat et", target: 20, rewardGold: 400, rewardGem: 2 },
+        { type: "gold", text: "5000 Altın kazan", target: 5000, rewardGold: 800, rewardGem: 3 }
+    ];
+    const t = templates[Math.floor(Math.random() * templates.length)];
+    return { id: Math.random(), type: t.type, text: t.text, target: t.target, current: 0, rewardGold: t.rewardGold, rewardGem: t.rewardGem };
+},
     // requestAnimationFrame ile daha akıcı ve performanslı döngü
     gameLoop() {
         const now = Date.now();
@@ -142,11 +149,9 @@ if (!this.state.activeQuests || this.state.activeQuests.length === 0) {
     },
 
 triggerPrestige() {
-    // 1. Prestij kazancını hesapla
-    const gain = Math.floor(Math.sqrt(this.state.totals.goldEarned / 2000));
+    const gain = Math.floor(1000 * Math.sqrt(this.state.totals.goldEarned / 1e9));
     if (gain < 1) return;
 
-    // 2. State'i sıfırla
     this.state.tokens += gain;
     this.state.gold = 150;
     this.state.unlockedFields = [1];
@@ -154,18 +159,13 @@ triggerPrestige() {
     this.state.research = [];
     this.state.fields = { 1: { cropId: "wheat", progress: 0 } };
     this.state.factoryStatus = {};
-
-    // 3. KRİTİK DÜZELTME: Görevleri prestij anında yeniden oluştur
-    // EconomyEngine veya Quests modülünüzün görev üretme fonksiyonunu çağırın:
+    
+    // Prestij sonrası görevleri hemen burada üret
     this.state.activeQuests = [];
     for(let i = 0; i < 3; i++) {
-        // Eğer görev üretme fonksiyonunuz EconomyEngine içindeyse: 
-        // this.state.activeQuests.push(EconomyEngine.generateQuest()); 
-        // Veya daha önce paylaştığınız kodlardaki generateRandomQuest kullanıyorsanız:
-        this.state.activeQuests.push(this.generateRandomQuest()); 
+        this.state.activeQuests.push(this.generateRandomQuest());
     }
 
-    // 4. Kaydet ve Sayfayı Yenile
     SaveSystem.save(this.state);
     window.location.reload();
 },
