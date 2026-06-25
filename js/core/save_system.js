@@ -13,7 +13,7 @@ const SaveSystem = {
             machines: { tractor: 0, irrigation: 0, drone: 0 },
             research: [],
             completedQuests: [],
-            unlockedAchievements: [], activeQuests: [], unlockedFactories: [], factoryStatus: {},
+            unlockedAchievements: [],
             lastSaveTime: Date.now()
         };
     },

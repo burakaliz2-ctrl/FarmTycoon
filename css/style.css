@@ -11,26 +11,7 @@
     --danger: #ef4444;
     --border-color: #2e3d52;
 }
-.bottom-nav,
-.mobile-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 999;
-}
 
-.tab-content,
-.page-content,
-.main-content,
-#farm-screen,
-#farm-tab {
-    padding-bottom: 140px !important;
-}
-
-body {
-    overflow-y: auto !important;
-}
 * {
     box-sizing: border-box;
     margin: 0;
@@ -44,7 +25,6 @@ body {
     color: var(--text-main);
     overflow: hidden;
     height: 100vh;
-    padding-top: 100px;
 }
 
 #app {
@@ -236,30 +216,4 @@ body {
 @keyframes slideIn {
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
-}
-
-/* ChatGPT mobile fixes */
-html,body{
-overflow-x:hidden !important;
-overflow-y:auto !important;
-width:100%;
-}
-
-.page-content,.content,.main-content,#content{
-padding-bottom:120px !important;
-min-height:100vh !important;
-box-sizing:border-box;
-}
-
-.farm-container,.fields-container,.tab-content{
-overflow-y:auto !important;
-padding-bottom:120px !important;
-}
-
-@media (max-width:768px){
-.farm-card,.card{
-width:100% !important;
-max-width:100% !important;
-box-sizing:border-box !important;
-}
 }

@@ -4,27 +4,17 @@ const Game = {
     tickRate: 1000,
 
 async init() {
+    // 1. Verilerin yüklenmesini bekle
     this.state = await SaveSystem.load(); 
     
-    // Güvenlik: State'in içinde activeQuests anahtarı yoksa oluştur
-    if (!this.state.activeQuests) {
-        this.state.activeQuests = [];
-    }
+    // 2. Eğer Supabase kullanıyorsan yükleme süresini bekle
+    // (Eğer SaveSystem içinde await kullanıyorsan buraya await ekle)
 
-    // Eğer dizi hala boşsa görevleri üret
-    if (this.state.activeQuests.length === 0) {
-        // QuestModule varsa onu kullan, yoksa kendi generator'ını
-        if (typeof QuestModule !== 'undefined') {
-            // QuestModule'ün döndürdüğü değerleri state'e ata
-            // Dikkat: QuestModule fonksiyonların 'return' değerlerini burada almalısın
-            // Örnek: this.state.activeQuests = QuestModule.generateContracts();
-        } 
-        
-        // Eğer QuestModule'den veri gelmediyse veya üretilmediyse
-        if (this.state.activeQuests.length === 0) {
-            for(let i = 0; i < 3; i++) {
-                this.state.activeQuests.push(this.generateRandomQuest());
-            }
+    // 3. Güvenlik Kontrolü: State boşsa veya görevler yoksa
+    if (!this.state.activeQuests || this.state.activeQuests.length === 0) {
+        this.state.activeQuests = [];
+        for(let i = 0; i < 3; i++) {
+            this.state.activeQuests.push(this.generateRandomQuest());
         }
         await SaveSystem.save(this.state);
     }
@@ -33,15 +23,14 @@ async init() {
     UIModule.initTabs();
     this.setupEventListeners();
     
-    // calculateOfflineProgress asenkron bir işlemse 'await' ekle!
-    await this.calculateOfflineProgress(); 
+    this.calculateOfflineProgress();
     this.gameLoop();
 
     setInterval(() => SaveSystem.save(this.state), 30000);
     window.addEventListener('beforeunload', () => SaveSystem.save(this.state));
 
     this.updateUI();
-},
+},,
 
     generateRandomQuest() {
         const templates = [
@@ -53,31 +42,32 @@ async init() {
     },
 
 // Game objesinin içindeki triggerPrestige fonksiyonunu böyle değiştir:
-async triggerPrestige() {
-    const gain = Math.floor(1000 * Math.sqrt(this.state.totals.goldEarned / 1e9));
-    if (gain < 1) return;
-
-    // State sıfırlama
-    this.state.tokens += gain;
-    this.state.gold = 150;
-    this.state.unlockedFields = [1];
-    this.state.unlockedFactories = [];
-    this.state.research = [];
-    this.state.fields = { 1: { cropId: "wheat", progress: 0 } };
-    this.state.factoryStatus = {};
-
-    // GÖREVLERİ SIFIRLA VE YENİDEN ÜRET
-    this.state.activeQuests = [];
-    for(let i = 0; i < 3; i++) {
-        this.state.activeQuests.push(this.generateRandomQuest());
+triggerPrestige: () => {
+    // Game.state'e doğrudan erişmek için Game.state kullan (this yerine)
+    const state = Game.state;
+    const gain = Math.floor(1000 * Math.sqrt(state.totals.goldEarned / 1e9));
+    
+    if (gain < 1) {
+        Game.createToast("Prestij için yeterli kazanç yok!");
+        return;
     }
 
-    // KAYDET VE BEKLE
-    await SaveSystem.save(this.state);
+    state.tokens += gain;
+    state.gold = 150;
+    state.unlockedFields = [1];
+    state.unlockedFactories = [];
+    state.research = [];
+    state.fields = { 1: { cropId: "wheat", progress: 0 } };
+    state.factoryStatus = {};
+    state.activeQuests = [];
     
-    // YENİLEME
+    for(let i = 0; i < 3; i++) {
+        state.activeQuests.push(Game.generateRandomQuest());
+    }
+
+    SaveSystem.save(state);
     window.location.reload();
-},
+},,
 
     claimQuest(index) {
         const quest = this.state.activeQuests[index];
@@ -153,12 +143,4 @@ async triggerPrestige() {
     }
 };
 
-
-,
-formatNumber(n){return new Intl.NumberFormat('tr-TR').format(Math.floor(n||0));},
-buyField(id,cost){if(this.state.gold>=cost){this.state.gold-=cost;this.state.unlockedFields.push(id);this.state.fields[id]={cropId:'wheat',progress:0};this.updateUI();}},
-calculateOfflineProgress(){return true;},
-checkAchievements(){(ACHIEVEMENTS_DATA||[]).forEach(a=>{if(this.state.unlockedAchievements.includes(a.id)) return; let ok=false; if(a.category==='gold') ok=this.state.totals.goldEarned>=a.target; if(a.category==='harvest') ok=this.state.totals.cropsHarvested>=a.target; if(a.category==='prestige') ok=this.state.totals.prestigeCount>=a.target; if(ok){this.state.unlockedAchievements.push(a.id); this.state.gems+=a.rewardGem||0;}});},
-progressQuest(type,val){(this.state.activeQuests||[]).forEach(q=>{if(q.type===type) q.current=Math.min(q.target,q.current+val);});}
-};
-window.onload=()=>Game.init();
+window.onload = () => Game.init();
