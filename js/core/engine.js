@@ -53,35 +53,29 @@ async init() {
     },
 
 // Game objesinin içindeki triggerPrestige fonksiyonunu böyle değiştir:
-triggerPrestige: () => {
-    // Game.state'e doğrudan erişmek için Game.state kullan (this yerine)
-    const state = Game.state;
-    const gain = Math.floor(1000 * Math.sqrt(state.totals.goldEarned / 1e9));
-    
-    if (gain < 1) {
-        Game.createToast("Prestij için yeterli kazanç yok!");
-        return;
-    }
+async triggerPrestige() {
+    const gain = Math.floor(1000 * Math.sqrt(this.state.totals.goldEarned / 1e9));
+    if (gain < 1) return;
 
-    state.tokens += gain;
-    state.gold = 150;
-    state.unlockedFields = [1];
-    state.unlockedFactories = [];
-    state.research = [];
-    state.fields = { 1: { cropId: "wheat", progress: 0 } };
-    state.factoryStatus = {};
-    state.activeQuests = [];
-if(typeof QuestModule!=='undefined'){
-if(QuestModule.generateContracts) QuestModule.generateContracts();
-if(QuestModule.generateDailyContracts) QuestModule.generateDailyContracts();
-if(QuestModule.refreshContracts) QuestModule.refreshContracts();
-}
-    
+    // State sıfırlama
+    this.state.tokens += gain;
+    this.state.gold = 150;
+    this.state.unlockedFields = [1];
+    this.state.unlockedFactories = [];
+    this.state.research = [];
+    this.state.fields = { 1: { cropId: "wheat", progress: 0 } };
+    this.state.factoryStatus = {};
+
+    // GÖREVLERİ SIFIRLA VE YENİDEN ÜRET
+    this.state.activeQuests = [];
     for(let i = 0; i < 3; i++) {
-        state.activeQuests.push(Game.generateRandomQuest());
+        this.state.activeQuests.push(this.generateRandomQuest());
     }
 
-    SaveSystem.save(state);
+    // KAYDET VE BEKLE
+    await SaveSystem.save(this.state);
+    
+    // YENİLEME
     window.location.reload();
 },
 
