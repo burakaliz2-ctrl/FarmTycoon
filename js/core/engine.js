@@ -4,22 +4,27 @@ const Game = {
     tickRate: 1000,
 
 async init() {
-    // 1. Verilerin yüklenmesini bekle
     this.state = await SaveSystem.load(); 
     
-    // 2. Eğer Supabase kullanıyorsan yükleme süresini bekle
-    // (Eğer SaveSystem içinde await kullanıyorsan buraya await ekle)
-
-    // 3. Güvenlik Kontrolü: State boşsa veya görevler yoksa
-    if (!this.state.activeQuests || this.state.activeQuests.length === 0) {
+    // Güvenlik: State'in içinde activeQuests anahtarı yoksa oluştur
+    if (!this.state.activeQuests) {
         this.state.activeQuests = [];
-if(typeof QuestModule!=='undefined'){
-if(QuestModule.generateContracts) QuestModule.generateContracts();
-if(QuestModule.generateDailyContracts) QuestModule.generateDailyContracts();
-if(QuestModule.refreshContracts) QuestModule.refreshContracts();
-}
-        for(let i = 0; i < 3; i++) {
-            this.state.activeQuests.push(this.generateRandomQuest());
+    }
+
+    // Eğer dizi hala boşsa görevleri üret
+    if (this.state.activeQuests.length === 0) {
+        // QuestModule varsa onu kullan, yoksa kendi generator'ını
+        if (typeof QuestModule !== 'undefined') {
+            // QuestModule'ün döndürdüğü değerleri state'e ata
+            // Dikkat: QuestModule fonksiyonların 'return' değerlerini burada almalısın
+            // Örnek: this.state.activeQuests = QuestModule.generateContracts();
+        } 
+        
+        // Eğer QuestModule'den veri gelmediyse veya üretilmediyse
+        if (this.state.activeQuests.length === 0) {
+            for(let i = 0; i < 3; i++) {
+                this.state.activeQuests.push(this.generateRandomQuest());
+            }
         }
         await SaveSystem.save(this.state);
     }
@@ -28,7 +33,8 @@ if(QuestModule.refreshContracts) QuestModule.refreshContracts();
     UIModule.initTabs();
     this.setupEventListeners();
     
-    this.calculateOfflineProgress();
+    // calculateOfflineProgress asenkron bir işlemse 'await' ekle!
+    await this.calculateOfflineProgress(); 
     this.gameLoop();
 
     setInterval(() => SaveSystem.save(this.state), 30000);
